@@ -54,8 +54,12 @@ BEGIN
     AND e1.starttime < e2.endtime
     AND e1.endtime > e2.starttime
     JOIN UserRooms ur ON e1.Location = ur.Location
+     LEFT JOIN user_interaction ui 
+        ON (ui.userid1 = e1.userid AND ui.userid2 = e2.userid)
+        OR (ui.userid1 = e2.userid AND ui.userid2 = e1.userid)
     WHERE e1.userid = target_user_id
-    AND e2.userid <> target_user_id
+        AND e2.userid <> target_user_id
+        AND ui.interaction_id IS NULL
     ORDER BY ur.Location, e1.UserID, e2.UserID, e1.StartTime;
 END;
 $$;
