@@ -203,6 +203,8 @@ ALTER TABLE ONLY public.user_interaction
 -- PostgreSQL database dump complete
 --
 
+-- krishna's change
+
 -- this is a test change.
 --More test changes.
 --Another change
