@@ -252,5 +252,5 @@ ALTER TABLE ONLY public.user_interaction
 
 --
 -- PostgreSQL database dump complete
---
+-- This is a change
 
