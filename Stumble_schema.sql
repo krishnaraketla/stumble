@@ -17,6 +17,20 @@ SET client_min_messages = warning;
 SET row_security = off;
 
 --
+-- Name: dblink; Type: EXTENSION; Schema: -; Owner: 
+--
+
+CREATE EXTENSION IF NOT EXISTS dblink WITH SCHEMA public;
+
+
+--
+-- Name: EXTENSION dblink; Type: COMMENT; Schema: -; Owner: 
+--
+
+COMMENT ON EXTENSION dblink IS 'connect to other PostgreSQL databases from within a database';
+
+
+--
 -- Name: swipe; Type: TYPE; Schema: public; Owner: postgres
 --
 
@@ -28,6 +42,36 @@ CREATE TYPE public.swipe AS ENUM (
 
 
 ALTER TYPE public.swipe OWNER TO postgres;
+
+--
+-- Name: create_user_table(); Type: FUNCTION; Schema: public; Owner: postgres
+--
+
+CREATE FUNCTION public.create_user_table() RETURNS trigger
+    LANGUAGE plpgsql
+    AS $$
+DECLARE
+    new_table_name TEXT;
+BEGIN
+    -- Define the name of the new table
+    new_table_name := 'user_' || NEW.userid;
+    
+    -- Create the new table in the other database without a primary key
+    PERFORM dblink_exec('host=localhost port=5433 dbname=User_history user=postgres password=@Inferno112', 'CREATE TABLE ' || quote_ident(new_table_name) || ' (
+        location INT ,
+        intersection_start_time time,
+		intersection_end_time time,				
+        user_swiped int,
+		interaction swipe,
+		PRIMARY KEY(user_swiped,location)
+    )');
+    
+    RETURN NEW;
+END;
+$$;
+
+
+ALTER FUNCTION public.create_user_table() OWNER TO postgres;
 
 --
 -- Name: findoverlappingusers(integer); Type: FUNCTION; Schema: public; Owner: postgres
@@ -184,6 +228,13 @@ ALTER TABLE ONLY public.users
 
 
 --
+-- Name: users after_user_insert; Type: TRIGGER; Schema: public; Owner: postgres
+--
+
+CREATE TRIGGER after_user_insert AFTER INSERT ON public.users FOR EACH ROW EXECUTE PROCEDURE public.create_user_table();
+
+
+--
 -- Name: user_interaction user_interaction_userid1_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -203,10 +254,3 @@ ALTER TABLE ONLY public.user_interaction
 -- PostgreSQL database dump complete
 --
 
--- krishna's change
-
--- this is a test change.
---More test changes.
---Another change
--- Srivathsav
---changegit 
