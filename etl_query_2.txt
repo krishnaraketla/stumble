@@ -1,0 +1,28 @@
+SELECT 
+    e1.location AS Location,
+    e1.starttime AS StartTime1,
+    e1.endtime AS EndTime1,
+	e2.starttime as StartTime2,
+	e2.endtime as EndTime2,
+    ui2.username AS OtherUser,
+    ui.interaction
+FROM 
+    master e1
+JOIN 
+    master e2
+    ON e1.location = e2.location
+    AND e1.starttime < e2.endtime
+    AND e1.endtime > e2.starttime
+JOIN 
+    user_info ui2 
+    ON e2.userid = ui2.userid
+LEFT JOIN 
+    user_interaction ui
+    ON (ui.userid1 = e1.userid AND ui.userid2 = e2.userid)
+    OR (ui.userid1 = e2.userid AND ui.userid2 = e1.userid)
+WHERE 
+    e1.userid = 1
+    AND e2.userid <> 1 and
+	ui.interaction is not null
+ORDER BY 
+    e1.location, e1.starttime;
