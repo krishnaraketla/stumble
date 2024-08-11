@@ -1,0 +1,17 @@
+#################Setting up Airflow from windows in WSL##############
+
+1. Install wsl from cmd.
+2. install apache-airflow and all its python dependencies.
+3. Add airflow to path variables by going to .bashrc and typing this at the end -> export PATH=$PATH:/path/to/airflow/bin
+
+4. Write the command -> airflow db init
+5. Create user using -> airflow users create \
+    --username admin \
+    --password admin \
+    --firstname Admin \
+    --lastname User \
+    --role Admin \
+    --email admin@example.com
+6. Launch airflow on webserver -> airflow webserver --port 8080
+7. In another terminal -> airflow scheduler
+8. In a web browser go to this link -> http://localhost:8080

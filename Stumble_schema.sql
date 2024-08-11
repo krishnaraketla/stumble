@@ -77,34 +77,30 @@ ALTER FUNCTION public.create_user_table() OWNER TO postgres;
 -- Name: findoverlappingusers(integer); Type: FUNCTION; Schema: public; Owner: postgres
 --
 
-CREATE FUNCTION public.findoverlappingusers(target_user_id integer) RETURNS TABLE(room integer, overlappinguserid integer, overlappingstarttime time without time zone, overlappingendtime time without time zone)
+CREATE FUNCTION public.findoverlappingusers(target_user_id integer) RETURNS TABLE(room integer, overlappingusername character varying, overlappingstarttime time without time zone, overlappingendtime time without time zone)
     LANGUAGE plpgsql
     AS $$
 BEGIN
     RETURN QUERY
-    WITH UserRooms AS (
-        SELECT DISTINCT Location
-        FROM master
-        WHERE userid = target_user_id
-    )
     SELECT 
-        ur.Location AS Room,
-        e2.userid AS OverlappingUserID,
-        e2.starttime AS OverlappingStartTime,
-        e2.endtime AS OverlappingEndTime
+        e1.location AS room,
+        ui2.username as overlappingusername,
+        e2.starttime AS overlappingstarttime,
+        e2.endtime AS overlappingendtime
     FROM master e1
     JOIN master e2
-    ON e1.location = e2.location
-    AND e1.starttime < e2.endtime
-    AND e1.endtime > e2.starttime
-    JOIN UserRooms ur ON e1.Location = ur.Location
-     LEFT JOIN user_interaction ui 
+        ON e1.location = e2.location
+        AND e1.starttime < e2.endtime
+        AND e1.endtime > e2.starttime
+    LEFT JOIN user_interaction ui 
         ON (ui.userid1 = e1.userid AND ui.userid2 = e2.userid)
         OR (ui.userid1 = e2.userid AND ui.userid2 = e1.userid)
+	Join user_info ui2
+	on e2.userid=ui2.userid
     WHERE e1.userid = target_user_id
         AND e2.userid <> target_user_id
-        AND ui.interaction_id IS NULL
-    ORDER BY ur.Location, e1.UserID, e2.UserID, e1.StartTime;
+        AND ui.interaction_id IS NULL  -- Ensures we only return users with no interaction
+    ORDER BY e1.location, e2.starttime;
 END;
 $$;
 
@@ -147,7 +143,7 @@ SET default_with_oids = false;
 CREATE TABLE public.master (
     userid integer NOT NULL,
     location integer NOT NULL,
-    starttime time without time zone,
+    starttime time without time zone NOT NULL,
     endtime time without time zone
 );
 
@@ -196,11 +192,11 @@ CREATE TABLE public.users (
 ALTER TABLE public.users OWNER TO postgres;
 
 --
--- Name: master master_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: master example_table_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
 ALTER TABLE ONLY public.master
-    ADD CONSTRAINT master_pkey PRIMARY KEY (userid, location);
+    ADD CONSTRAINT example_table_pkey PRIMARY KEY (userid, starttime);
 
 
 --
@@ -235,6 +231,14 @@ CREATE TRIGGER after_user_insert AFTER INSERT ON public.users FOR EACH ROW EXECU
 
 
 --
+-- Name: master fk_user_info; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.master
+    ADD CONSTRAINT fk_user_info FOREIGN KEY (userid) REFERENCES public.user_info(userid);
+
+
+--
 -- Name: user_interaction user_interaction_userid1_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -252,5 +256,5 @@ ALTER TABLE ONLY public.user_interaction
 
 --
 -- PostgreSQL database dump complete
--- This is a change
+--
 
