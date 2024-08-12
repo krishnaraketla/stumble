@@ -8,7 +8,6 @@ def extract_transform_load(source_db_url, target_db_url):
     Parameters:
     - source_db_url: str, the connection URL for the source database.
     - target_db_url: str, the connection URL for the target database.
-    - transform_func: callable, a function to apply to the dataframe for transformation (optional).
     """
     
     # Create engines for both databases
